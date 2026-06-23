@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { usePriceHistory } from '../hooks/usePriceHistory'
 import { usePriceContext } from '../context/PriceContext'
 import { useAlerts } from '../hooks/useAlerts'
-import { PriceChart } from '../components/PriceChart'
+import { PriceChart, type TimeRange } from '../components/PriceChart'
 import { SourceHealthBadge } from '../components/SourceHealthBadge'
 import { ConnectionBadge } from '../components/ConnectionBadge'
 import { AlertBadge } from '../components/AlertBadge'
@@ -15,12 +15,15 @@ export function PriceDetail() {
   const { pair } = useParams<{ pair: string }>()
   const navigate = useNavigate()
   const decodedPair = pair ? decodeURIComponent(pair) : null
-  const { history, loading: historyLoading } = usePriceHistory(decodedPair)
-  const { prices, livePrices, wsStatus, subscribe, unsubscribe } = usePriceContext()
-  const { alerts, addAlert, updateAlert, removeAlert, getAlertsForPair, hasAlertsForPair } = useAlerts()
 
+  const [timeRange, setTimeRange] = useState<TimeRange>('24h')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null)
+
+  const RANGE_LIMITS: Record<TimeRange, number> = { '1h': 60, '24h': 100, '7d': 200, '30d': 300, '1y': 500 }
+  const { history, loading: historyLoading } = usePriceHistory(decodedPair, RANGE_LIMITS[timeRange])
+  const { prices, livePrices, wsStatus, subscribe, unsubscribe } = usePriceContext()
+  const { alerts, addAlert, updateAlert, removeAlert, getAlertsForPair, hasAlertsForPair } = useAlerts()
 
   useEffect(() => {
     if (decodedPair) subscribe([decodedPair])
@@ -159,6 +162,8 @@ export function PriceDetail() {
         data={history}
         pair={decodedPair}
         loading={historyLoading}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
       />
 
       <AlertModal

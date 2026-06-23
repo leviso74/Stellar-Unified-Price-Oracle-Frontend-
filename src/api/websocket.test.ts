@@ -5,7 +5,7 @@ import { FakeWebSocket } from '../test/fakeWebSocket'
 let ws: FakeWebSocket
 
 function stubWebSocket(): void {
-  const mock = vi.fn(() => ws) as any
+  const mock = vi.fn(() => ws) as any // eslint-disable-line @typescript-eslint/no-explicit-any
   mock.OPEN = FakeWebSocket.OPEN
   mock.CONNECTING = FakeWebSocket.CONNECTING
   mock.CLOSING = FakeWebSocket.CLOSING
