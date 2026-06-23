@@ -102,11 +102,11 @@ export const PriceTableView = memo(function PriceTableView({
             return (
               <tr
                 key={p.assetPair}
-                onClick={() => selectMode ? onToggleSelect?.(p.assetPair) : onRowClick(p.assetPair)}
+                onClick={() => { if (selectMode) { onToggleSelect?.(p.assetPair) } else { onRowClick(p.assetPair) } }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    selectMode ? onToggleSelect?.(p.assetPair) : onRowClick(p.assetPair)
+                    if (selectMode) { onToggleSelect?.(p.assetPair) } else { onRowClick(p.assetPair) }
                   }
                 }}
                 role="button"

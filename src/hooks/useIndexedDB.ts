@@ -127,7 +127,7 @@ export const idbCache = {
     try {
       const db = await openDB()
       await idbDelete(db, store, key)
-    } catch {}
+    } catch { /* cache delete failure is non-fatal */ }
   },
 
   async clear(store: StoreName): Promise<void> {
@@ -138,6 +138,6 @@ export const idbCache = {
         req.onsuccess = () => resolve()
         req.onerror = () => reject(req.error)
       })
-    } catch {}
+    } catch { /* cache clear failure is non-fatal */ }
   },
 }

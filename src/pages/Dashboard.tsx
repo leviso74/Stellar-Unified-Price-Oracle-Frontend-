@@ -130,7 +130,7 @@ export function Dashboard() {
       if (selectMode) {
         setSelected((prev) => {
           const next = new Set(prev)
-          next.has(pair) ? next.delete(pair) : next.add(pair)
+          if (next.has(pair)) { next.delete(pair) } else { next.add(pair) }
           return next
         })
       } else {
@@ -350,7 +350,7 @@ export function Dashboard() {
           onToggleSelect={(pair) => {
             setSelected((prev) => {
               const next = new Set(prev)
-              next.has(pair) ? next.delete(pair) : next.add(pair)
+              if (next.has(pair)) { next.delete(pair) } else { next.add(pair) }
               return next
             })
           }}
