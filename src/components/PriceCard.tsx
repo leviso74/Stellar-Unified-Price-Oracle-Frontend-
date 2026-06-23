@@ -1,7 +1,6 @@
 import { memo } from 'react'
 import type { PriceData } from '../types'
 import { formatPrice, timeAgo } from '../utils/format'
-
 const SOURCE_COLORS: Record<string, string> = {
   chainlink: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30',
   redstone: 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30',
