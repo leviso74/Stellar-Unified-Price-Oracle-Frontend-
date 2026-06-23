@@ -5,7 +5,7 @@ describe('config defaults', () => {
     vi.resetModules()
     vi.unstubAllEnvs()
   })
-
+const mock = vi.fn(() => ws) as any
   afterEach(() => {
     vi.unstubAllEnvs()
   })
