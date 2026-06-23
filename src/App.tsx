@@ -4,6 +4,7 @@ import { Layout } from './components/Layout'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Dashboard } from './pages/Dashboard'
 import { NotFound } from './pages/NotFound'
+import { PriceAlertProvider } from './hooks/usePriceAlerts'
 
 const PriceDetail = lazy(() =>
   import('./pages/PriceDetail').then((m) => ({ default: m.PriceDetail })),
@@ -21,15 +22,17 @@ export default function App() {
   return (
     <BrowserRouter>
       <ErrorBoundary>
-        <Layout>
-          <Suspense fallback={<PriceDetailLoader />}>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/price/:pair" element={<PriceDetail />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </Layout>
+        <PriceAlertProvider>
+          <Layout>
+            <Suspense fallback={<PriceDetailLoader />}>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/price/:pair" element={<PriceDetail />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </Layout>
+        </PriceAlertProvider>
       </ErrorBoundary>
     </BrowserRouter>
   )

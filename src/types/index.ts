@@ -47,3 +47,26 @@ export interface WsPriceUpdate {
 }
 
 export type WsMessage = WsPriceUpdate
+
+export interface PriceAlert {
+  id: string
+  assetPair: string
+  condition: 'above' | 'below'
+  targetPrice: number
+  active: boolean
+  triggeredAt?: number
+}
+
+export interface PriceAlertContextType {
+  alerts: PriceAlert[]
+  addAlert: (alert: Omit<PriceAlert, 'id' | 'active'>) => void
+  removeAlert: (id: string) => void
+  toggleAlert: (id: string) => void
+  markAsRead: (id: string) => void
+  openAlertForm: (assetPair?: string) => void
+  isFormOpen: boolean
+  closeAlertForm: () => void
+  selectedAssetPair?: string
+  isPanelOpen: boolean
+  togglePanel: () => void
+}
