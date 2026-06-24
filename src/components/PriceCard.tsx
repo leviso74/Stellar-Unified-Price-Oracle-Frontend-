@@ -26,9 +26,11 @@ interface PriceCardProps {
   onAlertClick?: (e: React.MouseEvent) => void
   dragHandleProps?: DragHandleProps
   isDragOver?: boolean
+  selectMode?: boolean
+  isSelected?: boolean
 }
 
-export const PriceCard = memo(function PriceCard({ price, onClick, isLive, isStale, hasAlert, onAlertClick, dragHandleProps, isDragOver }: PriceCardProps) {
+export const PriceCard = memo(function PriceCard({ price, onClick, isLive, isStale, hasAlert, onAlertClick, dragHandleProps, isDragOver, selectMode, isSelected }: PriceCardProps) {
   const confidencePct = (price.confidence * 100).toFixed(1)
 
   return (
@@ -42,12 +44,24 @@ export const PriceCard = memo(function PriceCard({ price, onClick, isLive, isSta
       }}
       role="button"
       tabIndex={0}
-      className={`w-full text-left bg-gray-900 border rounded-xl p-5 hover:border-gray-700 hover:bg-gray-900/80 transition-all shadow-lg shadow-black/20 cursor-pointer ${isStale ? 'opacity-60' : ''} ${isDragOver ? 'border-cyan-500 ring-1 ring-cyan-500/40' : 'border-gray-800'}`}
+      className={`w-full text-left bg-gray-900 border rounded-xl p-5 hover:border-gray-700 hover:bg-gray-900/80 transition-all shadow-lg shadow-black/20 cursor-pointer ${isStale ? 'opacity-60' : ''} ${isSelected ? 'border-cyan-500 ring-2 ring-cyan-500/40' : isDragOver ? 'border-cyan-500 ring-1 ring-cyan-500/40' : 'border-gray-800'}`}
       aria-label={`View details for ${price.assetPair}`}
+      aria-selected={selectMode ? isSelected : undefined}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          {dragHandleProps && (
+          {selectMode ? (
+            <span
+              className={`w-4 h-4 flex items-center justify-center rounded border ${isSelected ? 'bg-cyan-600 border-cyan-500' : 'border-gray-600'}`}
+              aria-hidden="true"
+            >
+              {isSelected && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </span>
+          ) : dragHandleProps ? (
             <button
               type="button"
               aria-label={`Drag handle for ${price.assetPair}`}
@@ -65,7 +79,7 @@ export const PriceCard = memo(function PriceCard({ price, onClick, isLive, isSta
                 <circle cx="11" cy="12" r="1.2" />
               </svg>
             </button>
-          )}
+          ) : null}
           <h3 className="text-lg font-semibold text-gray-100">{price.assetPair}</h3>
         </div>
         <div className="flex items-center gap-2">
