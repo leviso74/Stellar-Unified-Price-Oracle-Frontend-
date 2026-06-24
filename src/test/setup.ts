@@ -25,8 +25,8 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 })
 
-// SVGPathElement.getTotalLength is not implemented in jsdom (used by Sparkline animation)
-if (!SVGPathElement.prototype.getTotalLength) {
+// SVGPathElement.getTotalLength is not implemented in jsdom (used by Recharts)
+if (typeof SVGPathElement !== 'undefined' && !SVGPathElement.prototype.getTotalLength) {
   SVGPathElement.prototype.getTotalLength = () => 0
 }
 
