@@ -16,18 +16,18 @@ export function shouldCollect() {
 export function initAnalytics() {
   if (!shouldCollect()) return
 
-  if (provider === 'plausible') {
+  if (provider === 'plausible' && id) {
     const s = document.createElement('script')
     s.setAttribute('defer', 'true')
-    s.setAttribute('data-domain', id)
+    s.setAttribute('data-domain', String(id))
     s.src = `https://plausible.io/js/plausible.js`
     document.head.appendChild(s)
   }
 
-  if (provider === 'umami') {
+  if (provider === 'umami' && id) {
     const s = document.createElement('script')
     s.setAttribute('defer', 'true')
-    s.setAttribute('data-website-id', id)
+    s.setAttribute('data-website-id', String(id))
     s.src = `https://umami.example.com/umami.js`
     document.head.appendChild(s)
   }
