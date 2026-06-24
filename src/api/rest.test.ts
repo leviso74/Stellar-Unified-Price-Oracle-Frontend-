@@ -13,6 +13,10 @@ vi.mock('../config', () => ({
   },
 }))
 
+vi.mock('../hooks/useIndexedDB', () => ({
+  idbCache: { get: vi.fn().mockResolvedValue(null), set: vi.fn() },
+}))
+
 // Keep a reference to reset coalescing state between tests
 const restModule = await import('./rest')
 const { fetchAllPrices, fetchPrice, fetchPriceHistory, fetchBatchHistory, fetchHealth } =
@@ -65,8 +69,12 @@ describe('fetchAllPrices', () => {
   it('throws HttpRetryError after retrying transient 5xx failures', async () => {
     mockFetch.mockResolvedValue(errorResponse(500, 'Server error'))
     const promise = fetchAllPrices()
+    // Attach handler immediately to prevent unhandled rejection
+    const caught = promise.catch((e) => e)
     await vi.runAllTimersAsync()
-    await expect(promise).rejects.toThrow('HTTP 500 Server error')
+    const err = await caught
+    expect(err).toBeInstanceOf(Error)
+    expect(err.message).toMatch('HTTP 500 Server error')
   })
 })
 
