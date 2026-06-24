@@ -24,9 +24,9 @@ export default function App() {
         <Layout>
           <Suspense fallback={<PriceDetailLoader />}>
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/price/:pair" element={<PriceDetail />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="/" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+              <Route path="/price/:pair" element={<ErrorBoundary><PriceDetail /></ErrorBoundary>} />
+              <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
             </Routes>
           </Suspense>
         </Layout>
