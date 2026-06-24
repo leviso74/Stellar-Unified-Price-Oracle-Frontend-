@@ -1,11 +1,10 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Dashboard } from './pages/Dashboard'
 import { NotFound } from './pages/NotFound'
 import { useWebVitals } from './hooks/useWebVitals'
-import { useAccessibility } from './hooks/useAccessibility'
 import { AlertsProvider } from './hooks/useAlerts'
 import { PreferencesProvider } from './preferences/PreferencesContext'
 import { ToastProvider } from './context/ToastContext'
@@ -24,7 +23,6 @@ const PriceDetail = lazy(() =>
 
 const BASENAME = import.meta.env.BASE_URL.replace(/\/$/, '')
 
-// Initialize analytics on module load
 if (config.analyticsEndpoint) {
   AnalyticsCollector.init(config.analyticsEndpoint)
 }
@@ -35,60 +33,18 @@ function AppContent() {
     <ErrorBoundary key={location.key}>
       <AlertsProvider>
         <PreferencesProvider>
-          <AccessibilityAwareLayout />
+          <Layout>
+            <Suspense fallback={null}>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/price/:pair" element={<PriceDetail />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </Layout>
         </PreferencesProvider>
       </AlertsProvider>
     </ErrorBoundary>
-  )
-}
-
-function ObservabilityOverlay() {
-  const [visible, setVisible] = useState(false)
-  const { wsStatus, refetchPrices, pricesError } = usePriceContext()
-  const isApiReachable = !pricesError
-
-  const { probes, overallHealth, healingHistory, forceHeal } = useObservability({
-    wsStatus,
-    isApiReachable,
-    reconnectWs: refetchPrices,
-    refetchState: refetchPrices,
-  })
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'O') {
-        e.preventDefault()
-        setVisible((v) => !v)
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
-
-  if (!visible) return null
-
-  return (
-    <ObservabilityDashboard
-      probes={probes}
-      overallHealth={overallHealth}
-      healingHistory={healingHistory}
-      onForceHeal={forceHeal}
-    />
-  )
-}
-
-function AccessibilityAwareLayout() {
-  useAccessibility()
-  return (
-    <Layout>
-      <Suspense fallback={null}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/price/:pair" element={<PriceDetail />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </Layout>
   )
 }
 
