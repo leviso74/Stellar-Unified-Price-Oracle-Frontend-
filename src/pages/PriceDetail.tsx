@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSwr } from '../hooks/useSwr'
 import { fetchPrice, fetchPriceHistory } from '../api/rest'
 import { PriceDetailSkeleton } from '../components/PriceDetailSkeleton'
+import { CsvImportZone } from '../components/CsvImportZone'
 import { formatPrice, timeAgo, formatTimestamp } from '../utils/format'
 import type { PriceHistoryEntry } from '../types'
+import type { CsvRow } from '../components/CsvImportZone'
 
 const SOURCE_COLORS: Record<string, string> = {
   chainlink: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
@@ -12,16 +15,18 @@ const SOURCE_COLORS: Record<string, string> = {
   reflector: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
 }
 
-function MiniChart({ data }: { data: PriceHistoryEntry[] }) {
+function MiniChart({ data, importedData }: { data: PriceHistoryEntry[]; importedData?: CsvRow[] }) {
   if (data.length < 2) return null
 
   const W = 600
   const H = 160
   const PAD = 8
 
-  const prices = data.map((d) => d.price)
-  const min = Math.min(...prices)
-  const max = Math.max(...prices)
+  const oraclePrices = data.map((d) => d.price)
+  const importedPrices = importedData?.map((d) => d.price) ?? []
+  const allPrices = [...oraclePrices, ...importedPrices]
+  const min = Math.min(...allPrices)
+  const max = Math.max(...allPrices)
   const range = max - min || 1
 
   const pts = data.map((d, i) => {
@@ -32,6 +37,18 @@ function MiniChart({ data }: { data: PriceHistoryEntry[] }) {
 
   const areaPath = `M${pts[0]} L${pts.join(' L')} L${W - PAD},${H - PAD} L${PAD},${H - PAD} Z`
   const linePath = `M${pts[0]} L${pts.join(' L')}`
+
+  let importedPath: string | null = null
+  if (importedData && importedData.length >= 2) {
+    const importedMinTs = importedData[0].timestamp
+    const importedTsRange = importedData[importedData.length - 1].timestamp - importedMinTs || 1
+    const importedPts = importedData.map((d) => {
+      const x = PAD + ((d.timestamp - importedMinTs) / importedTsRange) * (W - PAD * 2)
+      const y = H - PAD - ((d.price - min) / range) * (H - PAD * 2)
+      return `${x},${y}`
+    })
+    importedPath = `M${importedPts[0]} L${importedPts.join(' L')}`
+  }
 
   return (
     <svg
@@ -48,6 +65,9 @@ function MiniChart({ data }: { data: PriceHistoryEntry[] }) {
       </defs>
       <path d={areaPath} fill="url(#chartGrad)" />
       <path d={linePath} fill="none" stroke="#06b6d4" strokeWidth="2" />
+      {importedPath && (
+        <path d={importedPath} fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4,2" />
+      )}
     </svg>
   )
 }
@@ -55,6 +75,7 @@ function MiniChart({ data }: { data: PriceHistoryEntry[] }) {
 export function PriceDetail() {
   const { pair } = useParams<{ pair: string }>()
   const navigate = useNavigate()
+  const [importedData, setImportedData] = useState<CsvRow[] | null>(null)
 
   const decodedPair = pair ? decodeURIComponent(pair) : ''
 
@@ -132,14 +153,38 @@ export function PriceDetail() {
 
           {/* History chart */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Price History</p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Price History</p>
+              {importedData && (
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="flex items-center gap-1 text-cyan-400">
+                    <span className="inline-block w-6 border-t-2 border-cyan-500" />
+                    Oracle
+                  </span>
+                  <span className="flex items-center gap-1 text-amber-400">
+                    <span className="inline-block w-6 border-t-2 border-amber-400 border-dashed" />
+                    Imported
+                  </span>
+                </div>
+              )}
+            </div>
             {historyResponse && historyResponse.history.length > 1 ? (
-              <MiniChart data={historyResponse.history} />
+              <MiniChart data={historyResponse.history} importedData={importedData ?? undefined} />
             ) : (
               <div className="h-48 flex items-center justify-center text-gray-600 text-sm">
                 No history available
               </div>
             )}
+          </div>
+
+          {/* CSV import */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Import Price Data</p>
+            <CsvImportZone
+              hasImport={importedData !== null}
+              onImport={setImportedData}
+              onClear={() => setImportedData(null)}
+            />
           </div>
         </div>
       ) : null}
