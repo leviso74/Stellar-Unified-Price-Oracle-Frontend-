@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSwr } from '../hooks/useSwr'
 import { fetchPrice, fetchPriceHistory } from '../api/rest'
 import { PriceDetailSkeleton } from '../components/PriceDetailSkeleton'
 import { CsvImportZone } from '../components/CsvImportZone'
-import { formatPrice, timeAgo, formatTimestamp } from '../utils/format'
-import type { PriceHistoryEntry } from '../types'
+import { CanvasChart } from '../chart/CanvasChart'
+import { formatPrice, timeAgo, formatTimestamp, formatChartTime } from '../utils/format'
+import type { ChartSeries } from '../chart/ChartEngine'
 import type { CsvRow } from '../components/CsvImportZone'
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -13,63 +14,6 @@ const SOURCE_COLORS: Record<string, string> = {
   redstone: 'bg-red-500/20 text-red-400 border-red-500/30',
   band: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   reflector: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-}
-
-function MiniChart({ data, importedData }: { data: PriceHistoryEntry[]; importedData?: CsvRow[] }) {
-  if (data.length < 2) return null
-
-  const W = 600
-  const H = 160
-  const PAD = 8
-
-  const oraclePrices = data.map((d) => d.price)
-  const importedPrices = importedData?.map((d) => d.price) ?? []
-  const allPrices = [...oraclePrices, ...importedPrices]
-  const min = Math.min(...allPrices)
-  const max = Math.max(...allPrices)
-  const range = max - min || 1
-
-  const pts = data.map((d, i) => {
-    const x = PAD + (i / (data.length - 1)) * (W - PAD * 2)
-    const y = H - PAD - ((d.price - min) / range) * (H - PAD * 2)
-    return `${x},${y}`
-  })
-
-  const areaPath = `M${pts[0]} L${pts.join(' L')} L${W - PAD},${H - PAD} L${PAD},${H - PAD} Z`
-  const linePath = `M${pts[0]} L${pts.join(' L')}`
-
-  let importedPath: string | null = null
-  if (importedData && importedData.length >= 2) {
-    const importedMinTs = importedData[0].timestamp
-    const importedTsRange = importedData[importedData.length - 1].timestamp - importedMinTs || 1
-    const importedPts = importedData.map((d) => {
-      const x = PAD + ((d.timestamp - importedMinTs) / importedTsRange) * (W - PAD * 2)
-      const y = H - PAD - ((d.price - min) / range) * (H - PAD * 2)
-      return `${x},${y}`
-    })
-    importedPath = `M${importedPts[0]} L${importedPts.join(' L')}`
-  }
-
-  return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="none"
-      className="w-full h-48"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaPath} fill="url(#chartGrad)" />
-      <path d={linePath} fill="none" stroke="#06b6d4" strokeWidth="2" />
-      {importedPath && (
-        <path d={importedPath} fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4,2" />
-      )}
-    </svg>
-  )
 }
 
 export function PriceDetail() {
@@ -92,6 +36,29 @@ export function PriceDetail() {
   )
 
   const loading = priceLoading || historyLoading
+
+  const chartSeries = useMemo<ChartSeries[]>(() => {
+    const series: ChartSeries[] = []
+    if (historyResponse && historyResponse.history.length >= 2) {
+      series.push({
+        id: 'oracle',
+        label: decodedPair,
+        points: historyResponse.history.map((h) => ({ x: h.timestamp, y: h.price })),
+        color: '#06b6d4',
+        style: 'area',
+      })
+    }
+    if (importedData && importedData.length >= 2) {
+      series.push({
+        id: 'imported',
+        label: 'Imported CSV',
+        points: importedData.map((r) => ({ x: r.timestamp, y: r.price })),
+        color: '#f59e0b',
+        style: 'dashed-line',
+      })
+    }
+    return series
+  }, [historyResponse, importedData, decodedPair])
 
   return (
     <div>
@@ -152,24 +119,15 @@ export function PriceDetail() {
           </div>
 
           {/* History chart */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs text-gray-500 uppercase tracking-wider">Price History</p>
-              {importedData && (
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1 text-cyan-400">
-                    <span className="inline-block w-6 border-t-2 border-cyan-500" />
-                    Oracle
-                  </span>
-                  <span className="flex items-center gap-1 text-amber-400">
-                    <span className="inline-block w-6 border-t-2 border-amber-400 border-dashed" />
-                    Imported
-                  </span>
-                </div>
-              )}
-            </div>
-            {historyResponse && historyResponse.history.length > 1 ? (
-              <MiniChart data={historyResponse.history} importedData={importedData ?? undefined} />
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+            <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Price History</p>
+            {chartSeries.length > 0 ? (
+              <CanvasChart
+                series={chartSeries}
+                className="w-full h-48"
+                formatX={formatChartTime}
+                formatY={formatPrice}
+              />
             ) : (
               <div className="h-48 flex items-center justify-center text-gray-600 text-sm">
                 No history available
