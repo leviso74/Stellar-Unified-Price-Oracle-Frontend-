@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { usePriceContext } from '../context/PriceContext'
 import { useAlerts } from '../hooks/useAlerts'
@@ -15,7 +15,7 @@ const SKELETON_COUNT = 8
 function mergePrices(
   restPrices: PriceData[],
   livePrices: Map<string, LivePriceEntry>,
-) {
+): PriceData[] {
   return restPrices.map((p) => {
     const live = livePrices.get(p.assetPair)
     if (live && live.data.timestamp >= p.timestamp) {
@@ -25,7 +25,7 @@ function mergePrices(
   })
 }
 
-function exportCSV(items: PriceData[]) {
+function exportCSV(items: PriceData[]): void {
   const header = 'Asset Pair,Price,Confidence,Sources,Updated'
   const rows = items.map((p) =>
     [
@@ -45,7 +45,7 @@ function exportCSV(items: PriceData[]) {
   URL.revokeObjectURL(url)
 }
 
-export function Dashboard() {
+export function Dashboard(): ReactElement {
   const { prices, pricesLoading, pricesError, pricesValidating, livePrices, wsStatus } = usePriceContext()
   const navigate = useNavigate()
   const { alerts, addAlert, removeAlert, hasAlertsForPair, activeCount } = useAlerts()

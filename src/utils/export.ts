@@ -5,7 +5,7 @@ function isoTs(ts: number): string {
 }
 
 export function toCsv(rows: Array<Record<string, unknown>>, headers: string[]): string {
-  const escape = (v: unknown) => {
+  const escape = (v: unknown): string => {
     const s = String(v ?? '')
     return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
   }

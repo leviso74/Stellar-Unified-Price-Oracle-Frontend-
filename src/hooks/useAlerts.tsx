@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, createContext, useContext, ReactNode } from 'react'
+import { useState, useCallback, useEffect, createContext, useContext, ReactNode, type ReactElement } from 'react'
 import type { Alert, AlertsContextType } from '../types'
 import { usePriceContext } from '../context/PriceContext'
 
@@ -13,13 +13,13 @@ function loadAlerts(): Alert[] {
   }
 }
 
-function saveAlerts(alerts: Alert[]) {
+function saveAlerts(alerts: Alert[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts))
 }
 
 const AlertsContext = createContext<AlertsContextType | null>(null)
 
-export function AlertsProvider({ children }: { children: ReactNode }) {
+export function AlertsProvider({ children }: { children: ReactNode }): ReactElement {
   const [alerts, setAlerts] = useState<Alert[]>(loadAlerts)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   
@@ -144,7 +144,7 @@ export function AlertsProvider({ children }: { children: ReactNode }) {
   return <AlertsContext.Provider value={value}>{children}</AlertsContext.Provider>
 }
 
-export function useAlerts() {
+export function useAlerts(): AlertsContextType {
   const context = useContext(AlertsContext)
   if (!context) {
     throw new Error('useAlerts must be used within an AlertsProvider')

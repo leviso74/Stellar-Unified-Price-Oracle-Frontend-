@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react'
 import type { ConnectionStatus } from '../api/websocket'
 
 const STATUS_MAP: Record<ConnectionStatus, { label: string; color: string }> = {
@@ -7,7 +8,7 @@ const STATUS_MAP: Record<ConnectionStatus, { label: string; color: string }> = {
   disconnected: { label: 'Offline', color: 'bg-red-500' },
 }
 
-export function ConnectionBadge({ status }: { status: ConnectionStatus }) {
+export function ConnectionBadge({ status }: { status: ConnectionStatus }): ReactElement {
   const s = STATUS_MAP[status]
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300" role="status" aria-label={`WebSocket ${s.label}`}>

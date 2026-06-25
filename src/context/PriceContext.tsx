@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode, type ReactElement } from 'react'
 import { useSwr } from '../hooks/useSwr'
 import { WebSocketClient, type ConnectionStatus } from '../api/websocket'
 import { fetchAllPrices, fetchPrice } from '../api/rest'
@@ -19,7 +19,7 @@ export interface PriceContextValue {
 
 const PriceContext = createContext<PriceContextValue | null>(null)
 
-export function PriceProvider({ children }: { children: ReactNode }) {
+export function PriceProvider({ children }: { children: ReactNode }): ReactElement {
   const { data: prices = [], loading: pricesLoading, error: pricesError, isValidating: pricesValidating, refetch: refetchPrices } = useSwr<PriceData[]>(
     'prices',
     () => fetchAllPrices(),
@@ -32,7 +32,7 @@ export function PriceProvider({ children }: { children: ReactNode }) {
   const requestIdsRef = useRef<Map<string, number>>(new Map())
   const cleanupTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
-  const clearCleanupTimer = (pair: string) => {
+  const clearCleanupTimer = (pair: string): void => {
     const timer = cleanupTimersRef.current.get(pair)
     if (timer) {
       clearTimeout(timer)
@@ -170,8 +170,8 @@ export function PriceProvider({ children }: { children: ReactNode }) {
     }
   }, [prices])
 
-  const subscribe = (pairs: string[]) => wsRef.current?.subscribe(pairs)
-  const unsubscribe = (pairs: string[]) => wsRef.current?.unsubscribe(pairs)
+  const subscribe = (pairs: string[]): void => wsRef.current?.subscribe(pairs)
+  const unsubscribe = (pairs: string[]): void => wsRef.current?.unsubscribe(pairs)
 
   const value: PriceContextValue = {
     prices,
